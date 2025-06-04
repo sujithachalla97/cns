@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cryptography Code Copy App</title>
+  <style>
+    body { font-family: monospace; background: #f7f9fb; padding: 20px; }
+    h1 { text-align: center; }
+    .card {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      float: right;
+      cursor: pointer;
+    }
+    textarea {
+      width: 100%;
+      height: 220px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Template for each program -->
+<script>
+function copyText(id) {
+  const text = document.getElementById(id);
+  text.select();
+  text.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+  alert("Copied!");
+}
+</script>
+
+<div class="card">
+  <h2>1. Caesar Cipher <button onclick="copyText('prog1')">Copy</button></h2>
+  <textarea id="prog1">def encrypt(plaintext,shifts):
+    cipher=""
+    for ch in plaintext:
+        if ch==" ":
+            cipher+=" "
+        elif ch.isupper():
+            cipher+=chr((ord(ch)+shifts-65)%26+65)
+        elif ch.islower():
+            cipher+=chr((ord(ch)+shifts-97)%26+97)
+        elif ch.isdigit():
+            cipher+=chr((ord(ch)+shifts-48)%10+48)
+        else:
+            cipher+=chr(ord(ch)+shifts)
+    return cipher
+
+def decrypt(ciphertext,shifts):
+    plain=""
+    for ch in ciphertext:
+        if ch==" ":
+            plain+=" "
+        elif ch.isupper():
+            plain+=chr((ord(ch)-shifts-65)%26+65)
+        elif ch.islower():
+            plain+=chr((ord(ch)-shifts-97)%26+97)
+        elif ch.isdigit():
+            plain+=chr((ord(ch)-shifts-48)%10+48)
+        else:
+            plain+=chr(ord(ch)-shifts)
+    return plain
+
+plaintext=input("enter plain text: ")
+shifts=int(input("enter no of shifts: "))
+ciphertext=encrypt(plaintext,shifts)
+print("encrypted text is: ", ciphertext)
+print("decrypted text is: ", decrypt(ciphertext,shifts))</textarea>
+</div>
+
+<div class="card">
+  <h2>2. Playfair Cipher <button onclick="copyText('prog2')">Copy</button></h2>
+  <textarea id="prog2">def generate_matrix(key):
+    key=key.upper().replace("J","I")
+    matrix,seen=[],set()
+    for char in key+"ABCDEFGHIKLMNOPQRSTUVWXYZ":
+        if char not in seen:
+            matrix.append(char)
+            seen.add(char)
+    return [matrix[i:i+5] for i in range(0,25,5)]
+    
+def prepare_text(plaintext):
+    text=plaintext.upper().replace("J","I").replace(" ","")
+    pairs,i=[],0
+    while i&lt;len(text):
+        a=text[i]
+        b=text[i+1] if i+1&lt;len(text) else 'X'
+        if a==b:
+            pairs.append(a+'X')
+            i+=1
+        else:
+            pairs.append(a+b)
+            i+=2
+    return pairs
+   
+def find_pos(matrix,char):
+    for i in range(5):
+        for j in range(5):
+            if matrix[i][j]==char:
+                return i,j
+
+def encrypt_digraph(matrix,a,b):
+    r1,c1=find_pos(matrix,a)
+    r2,c2=find_pos(matrix,b)
+    if r1==r2:
+        return matrix[r1][(c1+1)%5]+matrix[r2][(c2+1)%5]
+    elif c1==c2:
+        return matrix[(r1+1)%5][c1]+matrix[(r2+1)%5][c2]
+    else:
+        return matrix[r1][c2]+matrix[r2][c1]
+ 
+def decrypt_digraph(matrix,a,b):
+    r1,c1=find_pos(matrix,a)
+    r2,c2=find_pos(matrix,b)
+    if r1==r2:
+        return matrix[r1][(c1-1)%5]+matrix[r2][(c2-1)%5]
+    elif c1==c2:
+        return matrix[(r1-1)%5][c1]+matrix[(r2-1)%5][c2]
+    else:
+        return matrix[r1][c2]+matrix[r2][c1]
+               
+def decrypt(encryptedText,key):
+    matrix,pairs=generate_matrix(key),prepare_text(encryptedText)
+    return "".join(decrypt_digraph(matrix,a,b) for a,b in pairs)           
+        
+def encrypt(plaintext,key):
+    matrix,pairs=generate_matrix(key),prepare_text(plaintext)
+    return "".join(encrypt_digraph(matrix,a,b) for a,b in pairs)
+
+key=input("enter key: ")
+plaintext=input("enter plain text: ")
+encryptedText=encrypt(plaintext,key)
+print("encrypted text: ",encryptedText)
+print("decrypted text: ",decrypt(encryptedText,key))</textarea>
+</div>
+
+<div class="card">
+  <h2>3. Hill Cipher <button onclick="copyText('prog3')">Copy</button></h2>
+  <textarea id="prog3">def get_key_matrix(key):
+    key_matrix = []
+    k = 0
+    for i in range(3):
+        row = []
+        for j in range(3):
+            row.append(ord(key[k]) % 65)
+            k += 1
+        key_matrix.append(row)
+    return key_matrix
+
+def mod_inverse(a, m):
+    for i in range(1, m):
+        if (a * i) % m == 1:
+            return i
+    return None
+
+def determinant(matrix):
+    a = matrix[0][0]*(matrix[1][1]*matrix[2][2] - matrix[1][2]*matrix[2][1])
+    b = matrix[0][1]*(matrix[1][0]*matrix[2][2] - matrix[1][2]*matrix[2][0])
+    c = matrix[0][2]*(matrix[1][0]*matrix[2][1] - matrix[1][1]*matrix[2][0])
+    return (a - b + c) % 26
+
+def matrix_cofactor(matrix):
+    def minor(i, j):
+        return [
+            [matrix[x][y] for y in range(3) if y != j]
+            for x in range(3) if x != i
+        ]
+    cofactor = []
+    for i in range(3):
+        row = []
+        for j in range(3):
+            m = minor(i, j)
+            val = ((m[0][0]*m[1][1] - m[0][1]*m[1][0]) * ((-1)**(i+j))) % 26
+            row.append(val)
+        cofactor.append(row)
+    return cofactor
+
+def transpose(matrix):
+    return [[matrix[j][i] for j in range(3)] for i in range(3)]
+
+def inverse_key_matrix(matrix):
+    det = determinant(matrix)
+    inv_det = mod_inverse(det, 26)
+    if inv_det is None:
+        raise ValueError("Key matrix is not invertible")
+
+    cofactor = matrix_cofactor(matrix)
+    adjugate = transpose(cofactor)
+    inverse = [[(inv_det * adjugate[i][j]) % 26 for j in range(3)] for i in range(3)]
+    return inverse
+
+def multiply_matrices(matrix1, matrix2):
+    result = [[0] for _ in range(3)]
+    for i in range(3):
+        for j in range(1):
+            for k in range(3):
+                result[i][j] += matrix1[i][k] * matrix2[k][j]
+            result[i][j] %= 26
+    return result
+
+def encrypt_message(message, key_matrix):
+    message_vector = [[ord(char) % 65] for char in message]
+    cipher_vector = multiply_matrices(key_matrix, message_vector)
+    return ''.join([chr(num[0] + 65) for num in cipher_vector])
+
+def decrypt_message(cipher, key_matrix):
+    inverse_matrix = inverse_key_matrix(key_matrix)
+    cipher_vector = [[ord(char) % 65] for char in cipher]
+    plain_vector = multiply_matrices(inverse_matrix, cipher_vector)
+    return ''.join([chr(num[0] + 65) for num in plain_vector])
+
+def hill_cipher(message, key):
+    key_matrix = get_key_matrix(key)
+    encrypted = encrypt_message(message, key_matrix)
+    decrypted = decrypt_message(encrypted, key_matrix)
+    return encrypted, decrypted
+
+message = input("Enter a 3-letter message (uppercase): ")
+key = input("Enter a 9-letter key (uppercase): ")
+encrypted, decrypted = hill_cipher(message, key)
+print("Encrypted text:", encrypted)
+print("Decrypted text:", decrypted)</textarea>
+</div>
+
+<div class="card">
+  <h2>4. One Time Pad <button onclick="copyText('prog4')">Copy</button></h2>
+  <textarea id="prog4">def encrypt(plaintext,key):
+    cipher=""
+    summed=[]
+    for i in range(len(key)):
+        summed.append((ord(plaintext[i])-ord('A'))+(ord(key[i])-ord('A')))
+    for value in summed:
+        if value &gt; 26:
+            value -= 26
+        cipher += chr(value + ord('A'))
+    return cipher
+
+def decrypt(cipher,key):
+    plain=""
+    summed=[]
+    for i in range(len(key)):
+        summed.append((ord(cipher[i])-ord('A'))-(ord(key[i])-ord('A')))
+    for value in summed:
+        if value &lt; 0:
+            value += 26
+        plain += chr(value + ord('A'))
+    return plain
+
+plaintext = input("Enter plain text: ")
+key = input("Enter key: ")
+cipher = encrypt(plaintext.upper(), key.upper())
+print("Encrypted text:", cipher)
+print("Decrypted text:", decrypt(cipher, key.upper()))</textarea>
+</div>
+
+<div class="card">
+  <h2>5. RSA Algorithm <button onclick="copyText('prog5')">Copy</button></h2>
+  <textarea id="prog5">def gcd(a,b):
+    return a if b == 0 else gcd(b, a % b)
+
+def mod_inverse(e, phi):
+    for d in range(1, phi):
+        if (e * d) % phi == 1:
+            return d
+
+def isprime(n):
+    return all(n % i for i in range(2, int(n**0.5)+1)) if n &gt; 1 else False
+
+p = int(input("Enter prime number p: "))
+q = int(input("Enter prime number q: "))
+if not (isprime(p) and isprime(q)):
+    print("Both numbers must be prime.")
+    exit()
+
+n = p * q
+phi = (p - 1) * (q - 1)
+
+e = int(input(f"Enter public key e (1 &lt; e &lt; {phi}): "))
+if gcd(e, phi) != 1:
+    print("e must be coprime to phi.")
+    exit()
+
+d = mod_inverse(e, phi)
+msg = int(input("Enter number to encrypt (less than n): "))
+cipher = pow(msg, e, n)
+plain = pow(cipher, d, n)
+
+print("Public key (e,n):", (e, n))
+print("Private key (d,n):", (d, n))
+print("Encrypted:", cipher)
+print("Decrypted:", plain)</textarea>
+</div>
+
+<div class="card">
+  <h2>6. ElGamal Algorithm <button onclick="copyText('prog6')">Copy</button></h2>
+  <textarea id="prog6">import random
+
+p = 467
+g = 2
+private_key = random.randint(1, p-2)
+public_key = pow(g, private_key, p)
+
+message = 123
+k = random.randint(1, p-2)
+c1 = pow(g, k, p)
+c2 = (message * pow(public_key, k, p)) % p
+ciphertext = (c1, c2)
+
+s = pow(c1, private_key, p)
+s_inv = pow(s, -1, p)
+decrypted_message = (c2 * s_inv) % p
+
+print("Public Parameters: p =", p, ", g =", g)
+print("Private Key:", private_key)
+print("Public Key:", public_key)
+print("Encrypted Message:", ciphertext)
+print("Decrypted Message:", decrypted_message)</textarea>
+</div>
+
+</body>
+</html>
